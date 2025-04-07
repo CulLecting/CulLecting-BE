@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>이메일 인증</title>
+        <style>
+            body {
+                font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+                background-color: #f9f9f9;
+                padding: 20px;
+            }
+            .container {
+                max-width: 480px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+            }
+            .title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: #333;
+            }
+            .description {
+                font-size: 16px;
+                color: #555;
+                margin-bottom: 30px;
+            }
+            .code-box {
+                font-size: 32px;
+                font-weight: bold;
+                background-color: #f0f0f0;
+                padding: 15px 0;
+                text-align: center;
+                border-radius: 8px;
+                letter-spacing: 4px;
+                color: #2e6fd7;
+            }
+            .footer {
+                font-size: 12px;
+                color: #888;
+                margin-top: 40px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="title">이메일 인증번호 안내</div>
+            <div class="description">
+                아래 인증번호를 입력하여 이메일 인증을 완료해주세요.<br>
+                인증번호는 5분 동안 유효합니다.
+            </div>
+            <div class="code-box">${code}</div>
+            <div class="footer">
+                본 메일은 발신 전용입니다. 궁금한 점이 있다면 앱 또는 웹사이트를 통해 문의해주세요.
+            </div>
+        </div>
+    </body>
+</html>
