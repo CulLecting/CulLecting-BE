@@ -96,6 +96,12 @@ public class MemberService {
         memberRepository.save(member);
     }
 
+    // 비밀번호 확인
+    public boolean passwordEquals(String email, String password) {
+        Member member = memberRepository.findByEmail(email);
+        return passwordEncoder.matches(password, member.getPassword());
+    }
+
     // 토큰 생성
     public TokenResponse generateAccessToken(String email) {
         String accessToken = jwtTokenUtil.generateAccessToken(email);
@@ -141,6 +147,18 @@ public class MemberService {
     public String findEmailByToken(String token) {
         token = jwtTokenUtil.getPureToken(token);
         return jwtTokenUtil.getEmailFromToken(token);
+    }
+
+    // 토큰 삭제
+    public void removeMemberToken(String email) {
+        redisUtil.deleteToken(RedisTokenType.ACCESS_TOKEN, email);
+        redisUtil.deleteToken(RedisTokenType.REFRESH_TOKEN, email);
+    }
+
+    // 사용자 삭제
+    public void removeMember(String email) {
+        removeMemberToken(email);
+        memberRepository.delete(findByEmail(email));
     }
 
 }

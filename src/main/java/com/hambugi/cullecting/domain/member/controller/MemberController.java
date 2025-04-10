@@ -85,6 +85,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", response));
     }
 
+    // 유저정보 가져오기
     @GetMapping("/userinfo")
     public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
         Member member = memberService.findByEmail(userDetails.getUsername());
@@ -108,6 +109,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", response));
     }
 
+    // 로그인 페이지에서 비밀번호 재발급 메일 보내기
     @PostMapping("/login/resetpassword")
     public ResponseEntity<?> resetPassword(@RequestBody EmailRequest emailRequest) {
         boolean result = sendEmail(emailRequest, false);
@@ -117,6 +119,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success("인증번호 전송 완료", null));
     }
 
+    // 로그인 페이지 비밀번호 업데이트
     @PostMapping("/passwordupdate")
     public ResponseEntity<?> passwordUpdate(@RequestBody PasswordRequest passwordRequest, @RequestHeader("Authorization") String token) {
         if (!memberService.validateToken(token)) {
@@ -136,20 +139,45 @@ public class MemberController {
         }
     }
 
+    // 닉네임 업데이트
     @PostMapping("/nicknameupdate")
     public ResponseEntity<?> nicknameUpdate(@RequestBody NicknameUpdateRequest nickname, @AuthenticationPrincipal UserDetails userDetails) {
         memberService.nicknameUpdate(userDetails.getUsername(), nickname.getNickname());
         return ResponseEntity.ok(ApiResponse.success("닉네임 변경 완료", null));
     }
 
+    // 온보딩 데이터 추가
     @PostMapping("/onboarding")
     public ResponseEntity<?> onboarding(@AuthenticationPrincipal UserDetails userDetails, @RequestBody OnboardingRequest onboardingRequest) {
-        System.out.println("aa");
         boolean result = memberService.addOnboard(userDetails.getUsername(), onboardingRequest);
         if (!result) {
             return ResponseEntity.status(500).body(ApiResponse.error(500, "추가 실패"));
         }
         return ResponseEntity.ok(ApiResponse.success("추가 완료", null));
+    }
+
+    // 마이페이지에서 비밀번호 변경하기
+    @PostMapping("/mypage/passwordreset")
+    public ResponseEntity<?> passwordReset(@AuthenticationPrincipal UserDetails userDetails, @RequestBody PasswordResetRequest resetRequest) {
+        if(!memberService.passwordEquals(userDetails.getUsername(), resetRequest.getBeforePassword())) {
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "기존 비밀번호와 일치하지 않음"));
+        }
+        memberService.resetPassword(userDetails.getUsername(), resetRequest.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("비밀번호 변경 완료", null));
+    }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        memberService.removeMemberToken(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
+    }
+
+    // 회원 탈퇴
+    @PostMapping("/deletemember")
+    public ResponseEntity<?> deleteMember(@AuthenticationPrincipal UserDetails userDetails) {
+        memberService.removeMember(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success("유저 삭제 성공", null));
     }
 
     // 메일 보내기 기능을 하나로

@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -20,27 +21,31 @@ import java.util.List;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
+    private final PathMatcher pathMatcher;
     private JwtTokenUtil jwtTokenUtil;
     private CustomUserDetailsService userDetailsService;
     private RedisUtil redisUtil;
     private final List<String> EXCLUDE_URLS = List.of(
             "/member/send",
             "/member/verify",
-            "/member/login"
+            "/member/login",
+            "/images/**"
     );
 
-    public JwtRequestFilter(JwtTokenUtil jwtTokenUtil, CustomUserDetailsService userDetailsService, RedisUtil redisUtil) {
+    public JwtRequestFilter(JwtTokenUtil jwtTokenUtil, CustomUserDetailsService userDetailsService, RedisUtil redisUtil, PathMatcher pathMatcher) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
         this.redisUtil = redisUtil;
+        this.pathMatcher = pathMatcher;
     }
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
-        System.out.println(header);
         if (header == null || !header.startsWith("Bearer ")) {
             String requestURI = request.getRequestURI();
-            if (EXCLUDE_URLS.contains(requestURI)) {
+            boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
+
+            if (isExcluded) {
                 chain.doFilter(request, response);
                 return;
             }
