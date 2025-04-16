@@ -85,15 +85,24 @@ public class ArchivingController {
     }
 
     // 지피티 사용
-    @PostMapping("/findkeyword")
-    public ResponseEntity<?> findKeyword(@AuthenticationPrincipal UserDetails userDetails) {
-        Map<String, String> data = archivingService.findDistinctCategoriesByMemberId(userDetails.getUsername());
-        String result = gptService.analyzeCodenameList(data);
-        System.out.println(result);
-        if (result.isEmpty()) {
-            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터를 찾지 못함"));
+//    @PostMapping("/findkeyword")
+//    public ResponseEntity<?> findKeyword(@AuthenticationPrincipal UserDetails userDetails) {
+//        Map<String, String> data = archivingService.findDistinctCategoriesByMemberId(userDetails.getUsername());
+//        String result = gptService.analyzeCodenameList(data);
+//        System.out.println(result);
+//        if (result.isEmpty()) {
+//            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터를 찾지 못함"));
+//        }
+//        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", result));
+//    }
+
+    @PostMapping("/get-preference-card")
+    public ResponseEntity<?> preferenceCard(@AuthenticationPrincipal UserDetails userDetails) {
+        PreferenceCardDTO preferenceCardDTO = archivingService.findPreferenceCardByMemberId(userDetails.getUsername());
+        if (preferenceCardDTO == null) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "알 수 없는 오류로 인해 찾지 못함"));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", result));
+        return ResponseEntity.ok(ApiResponse.success("데이터 찾기 성공", preferenceCardDTO));
     }
 
 }

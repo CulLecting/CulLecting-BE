@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,7 +22,7 @@ public class GPTService {
     @Value("${openai.gpt.key}")
     private String apiKey;
 
-    public String analyzeCodenameList(Map<String, String> data) {
+    public List<String> analyzeCodenameList(Map<String, String> data) {
         String prompt = buildCodenamePrompt(data);
 
         Map<String, Object> requestBody = Map.of(
@@ -49,9 +50,10 @@ public class GPTService {
                 .bodyToMono(GPTResponseDTO.class)
                 .block();
 
-        return response.getChoices().get(0).getMessage().getContent();
+        List<String> result = convertStringToList(response.getChoices().get(0).getMessage().getContent());
+        return result;
     }
-
+    // 프롬프트 수정해야함
     private String buildCodenamePrompt(Map<String, String> data) {
         String result = formatTitleCodenameMap(data);
         System.out.println(result);
@@ -92,6 +94,12 @@ public class GPTService {
         return map.entrySet().stream()
                 .map(entry -> "- " + entry.getKey() + " : " + entry.getValue())
                 .collect(Collectors.joining("\n"));
+    }
+
+    private List<String> convertStringToList(String input) {
+        return Arrays.stream(input.split("\n"))
+                .map(line -> line.replaceFirst("-\\s*", "").trim())
+                .collect(Collectors.toList());
     }
 
 }

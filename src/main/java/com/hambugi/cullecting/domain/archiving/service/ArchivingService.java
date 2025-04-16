@@ -26,10 +26,12 @@ public class ArchivingService {
 
     private final ArchivingRepository archivingRepository;
     private final MemberRepository memberRepository;
+    private final GPTService gptService;
 
-    public ArchivingService(ArchivingRepository archivingRepository, MemberRepository memberRepository) {
+    public ArchivingService(ArchivingRepository archivingRepository, MemberRepository memberRepository, GPTService gptService) {
         this.archivingRepository = archivingRepository;
         this.memberRepository = memberRepository;
+        this.gptService = gptService;
     }
 
     public boolean addArchiving(ArchivingRequestDTO archivingRequestDTO, MultipartFile image, UserDetails userDetails) {
@@ -140,12 +142,11 @@ public class ArchivingService {
         archivingRepository.deleteById(id);
     }
 
-    public Map<String, String> findDistinctCategoriesByMemberId(String email) {
+    public Map<String, String> findCategoriesByMemberId(String email) {
         Member member = memberRepository.findByEmail(email);
         if (member == null) {
             return null;
         }
-        System.out.println(member);
         Map<String, String> data = convertTitleAndCodenameToMapFromMember(member);
         return data;
     }
@@ -159,5 +160,37 @@ public class ArchivingService {
                         (v1, v2) -> v1, // title 중복 시 처리
                         LinkedHashMap::new // 입력 순서 유지
                 ));
+    }
+
+    public PreferenceCardDTO findPreferenceCardByMemberId(String email) {
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            return null;
+        }
+        PreferenceCardDTO preferenceCardDTO = new PreferenceCardDTO();
+        preferenceCardDTO.setCulturalCount(findPreferenceCardCountByMemberId(email));
+        preferenceCardDTO.setManyCategory(getMostCategory(email));
+        preferenceCardDTO.setKeywords(gptService.analyzeCodenameList(findCategoriesByMemberId(email)));
+        return preferenceCardDTO;
+    }
+
+    private int findPreferenceCardCountByMemberId(String email) {
+        return archivingRepository.countByMemberEmail(email);
+    }
+
+    private String getMostCategory(String email) {
+        List<Archiving> archivingList = archivingRepository.findByMemberEmail(email);
+        if (archivingList.isEmpty()) {
+            return null;
+        }
+        return archivingList.stream().collect(Collectors.groupingBy(
+                Archiving::getCategory,
+                Collectors.counting()
+        ))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 }

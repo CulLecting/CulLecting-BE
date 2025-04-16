@@ -16,4 +16,6 @@ public interface ArchivingRepository extends JpaRepository<Archiving, Object> {
 
     @Query("SELECT e.title AS title, e.category AS codename FROM Archiving e WHERE e.member.id = :userId")
     List<TitleAndCodename> findByTitleAndCodenameFromUserId(@Param("userId") String userId);
+
+    int countByMemberEmail(String email);
 }
