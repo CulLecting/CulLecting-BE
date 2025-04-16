@@ -3,6 +3,7 @@ package com.hambugi.cullecting.domain.archiving.controller;
 import com.hambugi.cullecting.domain.archiving.dto.*;
 import com.hambugi.cullecting.domain.archiving.entity.Archiving;
 import com.hambugi.cullecting.domain.archiving.service.ArchivingService;
+import com.hambugi.cullecting.domain.archiving.service.GPTService;
 import com.hambugi.cullecting.domain.member.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -10,16 +11,20 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/archiving")
 public class ArchivingController {
 
     private final ArchivingService archivingService;
+    private final GPTService gptService;
 
-    public ArchivingController(ArchivingService archivingService) {
+    public ArchivingController(ArchivingService archivingService, GPTService gptService) {
         this.archivingService = archivingService;
+        this.gptService = gptService;
     }
 
     // 아카이빙 업로드
@@ -77,6 +82,18 @@ public class ArchivingController {
     public ResponseEntity<?> deleteArchiving(@RequestBody ArchivingDeleteRequestDTO archivingDeleteRequestDTO) {
         archivingService.deleteArchiving(archivingDeleteRequestDTO.getId());
         return ResponseEntity.ok(ApiResponse.success("아카이빙 삭제 성공", null));
+    }
+
+    // 지피티 사용
+    @PostMapping("/findkeyword")
+    public ResponseEntity<?> findKeyword(@AuthenticationPrincipal UserDetails userDetails) {
+        Map<String, String> data = archivingService.findDistinctCategoriesByMemberId(userDetails.getUsername());
+        String result = gptService.analyzeCodenameList(data);
+        System.out.println(result);
+        if (result.isEmpty()) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터를 찾지 못함"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", result));
     }
 
 }

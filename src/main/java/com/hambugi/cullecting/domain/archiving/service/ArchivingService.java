@@ -1,12 +1,10 @@
 package com.hambugi.cullecting.domain.archiving.service;
 
-import com.hambugi.cullecting.domain.archiving.dto.ArchivingRequestDTO;
-import com.hambugi.cullecting.domain.archiving.dto.ArchivingResponseDTO;
-import com.hambugi.cullecting.domain.archiving.dto.ArchivingTemplateUpdateRequestDTO;
-import com.hambugi.cullecting.domain.archiving.dto.ArchivingUpdateRequestDTO;
+import com.hambugi.cullecting.domain.archiving.dto.*;
 import com.hambugi.cullecting.domain.archiving.entity.Archiving;
 import com.hambugi.cullecting.domain.archiving.repository.ArchivingRepository;
 import com.hambugi.cullecting.domain.archiving.util.CardTemplate;
+import com.hambugi.cullecting.domain.archiving.util.TitleAndCodename;
 import com.hambugi.cullecting.domain.member.entity.Member;
 import com.hambugi.cullecting.domain.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ArchivingService {
@@ -54,10 +51,12 @@ public class ArchivingService {
     }
 
     private String addImage(MultipartFile image) {
-//        String fileName = image.getOriginalFilename();
-//        Path filePath = Paths.get(path + fileName);
         String originalFilename = image.getOriginalFilename();
-        String ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String ext = null;
+        if (originalFilename == null) {
+            return null;
+        }
+        ext = originalFilename.substring(originalFilename.lastIndexOf("."));
         String uniqueFileName = UUID.randomUUID().toString() + ext;
 
         Path filePath = Paths.get(path + uniqueFileName);
@@ -105,6 +104,7 @@ public class ArchivingService {
                 Files.deleteIfExists(oldFilePath);
             } catch (IOException e) {
                 System.out.println("⚠️ 기존 이미지 삭제 실패: " + e.getMessage());
+                return false;
             }
         }
         String imageName = addImage(image);
@@ -138,5 +138,26 @@ public class ArchivingService {
 
     public void deleteArchiving(String id) {
         archivingRepository.deleteById(id);
+    }
+
+    public Map<String, String> findDistinctCategoriesByMemberId(String email) {
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            return null;
+        }
+        System.out.println(member);
+        Map<String, String> data = convertTitleAndCodenameToMapFromMember(member);
+        return data;
+    }
+
+    private Map<String, String> convertTitleAndCodenameToMapFromMember(Member member) {
+        List<TitleAndCodename> list = archivingRepository.findByTitleAndCodenameFromUserId(member.getId());
+        return list.stream()
+                .collect(Collectors.toMap(
+                        TitleAndCodename::getTitle,
+                        TitleAndCodename::getCodename,
+                        (v1, v2) -> v1, // title 중복 시 처리
+                        LinkedHashMap::new // 입력 순서 유지
+                ));
     }
 }
