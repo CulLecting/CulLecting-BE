@@ -84,18 +84,6 @@ public class ArchivingController {
         return ResponseEntity.ok(ApiResponse.success("아카이빙 삭제 성공", null));
     }
 
-    // 지피티 사용
-//    @PostMapping("/findkeyword")
-//    public ResponseEntity<?> findKeyword(@AuthenticationPrincipal UserDetails userDetails) {
-//        Map<String, String> data = archivingService.findDistinctCategoriesByMemberId(userDetails.getUsername());
-//        String result = gptService.analyzeCodenameList(data);
-//        System.out.println(result);
-//        if (result.isEmpty()) {
-//            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터를 찾지 못함"));
-//        }
-//        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", result));
-//    }
-
     @PostMapping("/get-preference-card")
     public ResponseEntity<?> preferenceCard(@AuthenticationPrincipal UserDetails userDetails) {
         PreferenceCardDTO preferenceCardDTO = archivingService.findPreferenceCardByMemberId(userDetails.getUsername());

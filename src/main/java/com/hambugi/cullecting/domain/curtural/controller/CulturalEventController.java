@@ -1,7 +1,9 @@
 package com.hambugi.cullecting.domain.curtural.controller;
 
+import com.hambugi.cullecting.domain.curtural.dto.CulturalEventFromDateDTO;
 import com.hambugi.cullecting.domain.curtural.dto.CulturalEventImageRequest;
 import com.hambugi.cullecting.domain.curtural.dto.CulturalEventImageResponseDTO;
+import com.hambugi.cullecting.domain.curtural.dto.LatestCulturalEventDTO;
 import com.hambugi.cullecting.domain.curtural.service.CulturalEventService;
 import com.hambugi.cullecting.domain.member.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,7 @@ public class CulturalEventController {
     // 기간에 맞게 설정
     @GetMapping("/findculturalfromdate")
     public ResponseEntity<?> findCulturalFromDate() {
+        // 이미지, 제목, 장소, 시작 날짜, 끝나는 날짜
         return ResponseEntity.ok("a");
     }
 
@@ -40,7 +43,7 @@ public class CulturalEventController {
     // 행사 추천(온보딩 기반, 없으면 랜덤)
     @GetMapping("/recommendcultural")
     public ResponseEntity<?> recommendCultural(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-
+        // 이미지, 제목, 장소
         return ResponseEntity.ok("a");
     }
 
@@ -56,7 +59,9 @@ public class CulturalEventController {
     */
     @GetMapping("/latestcultural")
     public ResponseEntity<?> latestCultural() {
-        return ResponseEntity.ok("a");
+        // 이미지, 제목, 장소, 기간
+        LatestCulturalEventDTO latestCulturalEventDTO = culturalEventService.getLatestCulturalEvent();
+        return ResponseEntity.ok(ApiResponse.success("성공", latestCulturalEventDTO));
     }
 
 }
