@@ -1,19 +1,19 @@
 package com.hambugi.cullecting.domain.curtural.controller;
 
-import com.hambugi.cullecting.domain.curtural.dto.CulturalEventFromDateDTO;
-import com.hambugi.cullecting.domain.curtural.dto.CulturalEventImageRequest;
-import com.hambugi.cullecting.domain.curtural.dto.CulturalEventImageResponseDTO;
-import com.hambugi.cullecting.domain.curtural.dto.LatestCulturalEventDTO;
+import com.hambugi.cullecting.domain.curtural.dto.*;
+import com.hambugi.cullecting.domain.curtural.entity.CulturalEvent;
 import com.hambugi.cullecting.domain.curtural.service.CulturalEventService;
 import com.hambugi.cullecting.domain.member.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.file.attribute.UserPrincipal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,8 +27,8 @@ public class CulturalEventController {
 
     // 문화 이미지 검색
     @GetMapping("/findculturalimage")
-    public ResponseEntity<?> findCulturalImage(@RequestBody CulturalEventImageRequest culturalEventImageRequest) {
-        List<CulturalEventImageResponseDTO> imageList = culturalEventService.searchImage(culturalEventImageRequest.getKeyword());
+    public ResponseEntity<?> findCulturalImage(@RequestBody CulturalEventImageRequestDTO culturalEventImageRequestDTO) {
+        List<CulturalEventImageResponseDTO> imageList = culturalEventService.searchImage(culturalEventImageRequestDTO.getKeyword());
         return ResponseEntity.ok(ApiResponse.success("이미지 검색 성공", imageList));
     }
 
@@ -42,9 +42,13 @@ public class CulturalEventController {
 
     // 행사 추천(온보딩 기반, 없으면 랜덤)
     @GetMapping("/recommendcultural")
-    public ResponseEntity<?> recommendCultural(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<?> recommendCultural(@AuthenticationPrincipal UserDetails userDetails) {
         // 이미지, 제목, 장소
-        return ResponseEntity.ok("a");
+        List<RecommendCulturalEventResponseDTO> recommendCulturalEventResponseDTOList = culturalEventService.getRecommendCultural(userDetails.getUsername());
+        if (recommendCulturalEventResponseDTOList.isEmpty()) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 찾기 실패"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 찾기 성공", recommendCulturalEventResponseDTOList));
     }
 
     // 최신행사 (전체, 카테고리에 맞게)
@@ -62,6 +66,16 @@ public class CulturalEventController {
         // 이미지, 제목, 장소, 기간
         LatestCulturalEventDTO latestCulturalEventDTO = culturalEventService.getLatestCulturalEvent();
         return ResponseEntity.ok(ApiResponse.success("성공", latestCulturalEventDTO));
+    }
+
+    // 행사 상세 페이지
+    @GetMapping("/culturaldetail")
+    public ResponseEntity<?> culturalDetail(@RequestBody CulturalEventDetailRequestDTO culturalEventDetailRequestDTO) {
+        CulturalEvent culturalEvent = culturalEventService.getCulturalEvent(culturalEventDetailRequestDTO.getId());
+        if (culturalEvent == null) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 검색 실패"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", culturalEvent));
     }
 
 }

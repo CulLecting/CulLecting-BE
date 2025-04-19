@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CulturalEventImageRequest {
-    private String keyword;
+public class CulturalEventDetailRequestDTO {
+    private long id;
 }
