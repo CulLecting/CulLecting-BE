@@ -3,15 +3,15 @@ package com.hambugi.cullecting.domain.curtural.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
-public class CulturalEventFromDateDTO {
+public class CulturalEventFromDateResponseDTO {
     private long id;
     private String title;
     private String imageURL;
     private String place;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
 }

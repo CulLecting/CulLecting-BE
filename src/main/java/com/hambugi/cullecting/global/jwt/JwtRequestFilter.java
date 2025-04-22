@@ -97,8 +97,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     }
                     String path = request.getRequestURI();
                     if ("/member/refreshtoken".equals(path)) {
-                        chain.doFilter(request, response);
-                        return;
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                        System.out.println(userDetails.getUsername());
+                        UsernamePasswordAuthenticationToken auth =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(auth);
                     } else {
                         setErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "리프레시 토큰은 인증에 사용할 수 없습니다.");
                         return;

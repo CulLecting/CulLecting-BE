@@ -1,6 +1,6 @@
 package com.hambugi.cullecting.domain.curtural.service;
 
-import com.hambugi.cullecting.domain.curtural.dto.CulturalEventFromDateDTO;
+import com.hambugi.cullecting.domain.curtural.dto.CulturalEventFromDateResponseDTO;
 import com.hambugi.cullecting.domain.curtural.dto.CulturalEventImageResponseDTO;
 import com.hambugi.cullecting.domain.curtural.dto.LatestCulturalEventDTO;
 import com.hambugi.cullecting.domain.curtural.dto.RecommendCulturalEventResponseDTO;
@@ -11,6 +11,7 @@ import com.hambugi.cullecting.domain.member.entity.Member;
 import com.hambugi.cullecting.domain.member.service.MemberService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,41 +39,41 @@ public class CulturalEventService {
         return culturalEventImageResponseDTOList;
     }
 
-    public List<CulturalEventFromDateDTO> getLatestCulturalList() {
+    public List<CulturalEventFromDateResponseDTO> getLatestCulturalList() {
         List<CulturalEvent> culturalEventList = culturalEventRepository.findTop3RecentEventsBeforeNow();
-        List<CulturalEventFromDateDTO> culturalEventFromDateDTOList = new ArrayList<>();
+        List<CulturalEventFromDateResponseDTO> culturalEventFromDateResponseDTOList = new ArrayList<>();
         for (CulturalEvent culturalEvent : culturalEventList) {
-            CulturalEventFromDateDTO eventFromDateDTO = new CulturalEventFromDateDTO();
+            CulturalEventFromDateResponseDTO eventFromDateDTO = new CulturalEventFromDateResponseDTO();
             eventFromDateDTO.setId(culturalEvent.getId());
             eventFromDateDTO.setTitle(culturalEvent.getTitle());
             eventFromDateDTO.setPlace(culturalEvent.getPlace());
             eventFromDateDTO.setImageURL(culturalEvent.getMainImg());
             eventFromDateDTO.setStartDate(culturalEvent.getStartDate());
             eventFromDateDTO.setEndDate(culturalEvent.getEndDate());
-            culturalEventFromDateDTOList.add(eventFromDateDTO);
+            culturalEventFromDateResponseDTOList.add(eventFromDateDTO);
         }
-        return culturalEventFromDateDTOList;
+        return culturalEventFromDateResponseDTOList;
     }
 
-    public List<CulturalEventFromDateDTO> getLatestCulturalFromTheme(List<String> codeNameList) {
+    public List<CulturalEventFromDateResponseDTO> getLatestCulturalFromTheme(List<String> codeNameList) {
         List<CulturalEvent> culturalEventList = culturalEventRepository.findTop3ByThemeCodeBeforeNow(codeNameList);
-        List<CulturalEventFromDateDTO> culturalEventFromDateDTOList = new ArrayList<>();
+        List<CulturalEventFromDateResponseDTO> culturalEventFromDateResponseDTOList = new ArrayList<>();
         for (CulturalEvent culturalEvent : culturalEventList) {
-            CulturalEventFromDateDTO eventFromDateDTO = new CulturalEventFromDateDTO();
+            CulturalEventFromDateResponseDTO eventFromDateDTO = new CulturalEventFromDateResponseDTO();
             eventFromDateDTO.setId(culturalEvent.getId());
             eventFromDateDTO.setTitle(culturalEvent.getTitle());
             eventFromDateDTO.setPlace(culturalEvent.getPlace());
             eventFromDateDTO.setImageURL(culturalEvent.getMainImg());
             eventFromDateDTO.setStartDate(culturalEvent.getStartDate());
             eventFromDateDTO.setEndDate(culturalEvent.getEndDate());
-            culturalEventFromDateDTOList.add(eventFromDateDTO);
+            culturalEventFromDateResponseDTOList.add(eventFromDateDTO);
         }
-        return culturalEventFromDateDTOList;
+        return culturalEventFromDateResponseDTOList;
     }
 
     public LatestCulturalEventDTO getLatestCulturalEvent() {
         LatestCulturalEventDTO latestCulturalEventDTO = new LatestCulturalEventDTO();
-        Map<String, List<CulturalEventFromDateDTO>> culturalEventFromDateDTOMap = new HashMap<>();
+        Map<String, List<CulturalEventFromDateResponseDTO>> culturalEventFromDateDTOMap = new HashMap<>();
         culturalEventFromDateDTOMap.put("전체", getLatestCulturalList());
         for (CodeNameEnum codeNameEnum : CodeNameEnum.values()) {
             culturalEventFromDateDTOMap.put(codeNameEnum.getLabel(), getLatestCulturalFromTheme(codeNameEnum.getData()));
@@ -123,5 +124,24 @@ public class CulturalEventService {
 
     public CulturalEvent getCulturalEvent(Long id) {
         return culturalEventRepository.findById(id);
+    }
+
+    public List<CulturalEventFromDateResponseDTO> getCulturalListFromDate(LocalDate date) {
+        List<CulturalEvent> culturalEventList = culturalEventRepository.findCulturalFromDate(date);
+        if (culturalEventList == null) {
+            return null;
+        }
+        List<CulturalEventFromDateResponseDTO> culturalEventFromDateResponseDTOList = new ArrayList<>();
+        for (CulturalEvent culturalEvent : culturalEventList) {
+            CulturalEventFromDateResponseDTO responseDTO = new CulturalEventFromDateResponseDTO();
+            responseDTO.setId(culturalEvent.getId());
+            responseDTO.setTitle(culturalEvent.getTitle());
+            responseDTO.setPlace(culturalEvent.getPlace());
+            responseDTO.setImageURL(culturalEvent.getMainImg());
+            responseDTO.setStartDate(culturalEvent.getStartDate());
+            responseDTO.setEndDate(culturalEvent.getEndDate());
+            culturalEventFromDateResponseDTOList.add(responseDTO);
+        }
+        return culturalEventFromDateResponseDTOList;
     }
 }

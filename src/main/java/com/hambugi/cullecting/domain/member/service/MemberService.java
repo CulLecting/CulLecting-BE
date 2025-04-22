@@ -125,6 +125,7 @@ public class MemberService {
 
     // 토큰 값 비교
     public boolean validateRedisToken(String email, String token, RedisTokenType redisTokenType) {
+        token = jwtTokenUtil.getPureToken(token);
         return redisUtil.validateToken(redisTokenType, email, token);
     }
 

@@ -34,11 +34,14 @@ public class CulturalEventController {
 
     // 기간에 맞게 설정
     @GetMapping("/findculturalfromdate")
-    public ResponseEntity<?> findCulturalFromDate() {
+    public ResponseEntity<?> findCulturalFromDate(@RequestBody CulturalEventFromDateRequestDTO culturalEventFromDateRequestDTO) {
+        List<CulturalEventFromDateResponseDTO> responseDTOList = culturalEventService.getCulturalListFromDate(culturalEventFromDateRequestDTO.getDate());
+        if (responseDTOList.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success("데이터가 존재하지 않음", null));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", responseDTOList));
         // 이미지, 제목, 장소, 시작 날짜, 끝나는 날짜
-        return ResponseEntity.ok("a");
     }
-
 
     // 행사 추천(온보딩 기반, 없으면 랜덤)
     @GetMapping("/recommendcultural")

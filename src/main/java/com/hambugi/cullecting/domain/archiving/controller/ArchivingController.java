@@ -84,6 +84,7 @@ public class ArchivingController {
         return ResponseEntity.ok(ApiResponse.success("아카이빙 삭제 성공", null));
     }
 
+    // GPT로 데이터 분석한 것 보내주기
     @PostMapping("/get-preference-card")
     public ResponseEntity<?> preferenceCard(@AuthenticationPrincipal UserDetails userDetails) {
         PreferenceCardDTO preferenceCardDTO = archivingService.findPreferenceCardByMemberId(userDetails.getUsername());
