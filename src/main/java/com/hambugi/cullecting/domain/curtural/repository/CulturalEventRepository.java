@@ -2,13 +2,14 @@ package com.hambugi.cullecting.domain.curtural.repository;
 
 import com.hambugi.cullecting.domain.curtural.entity.CulturalEvent;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public interface CulturalEventRepository extends CrudRepository<CulturalEvent, Object> {
+public interface CulturalEventRepository extends CrudRepository<CulturalEvent, Object>, JpaSpecificationExecutor<CulturalEvent> {
     CulturalEvent findById(Long id);
     List<CulturalEvent> findByTitleContainingIgnoreCase(String keyword);
     List<CulturalEvent> findTop3ByOrderByStartDateAsc();

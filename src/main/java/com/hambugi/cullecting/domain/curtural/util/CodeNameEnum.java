@@ -1,6 +1,8 @@
 package com.hambugi.cullecting.domain.curtural.util;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public enum CodeNameEnum {
     // 최신행사 (전체, 카테고리에 맞게)
@@ -34,5 +36,11 @@ public enum CodeNameEnum {
     }
     public List<String> getData() {
         return data;
+    }
+
+    public static Optional<CodeNameEnum> getByLabel(String label) {
+        return Arrays.stream(values())
+                .filter(e -> e.getLabel().equals(label))
+                .findFirst();
     }
 }

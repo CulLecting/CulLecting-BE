@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class CulturalEventFromDateResponseDTO {
+public class CulturalEventResponseDTO {
     private long id;
     private String title;
     private String imageURL;

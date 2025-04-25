@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.file.attribute.UserPrincipal;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -33,14 +31,35 @@ public class CulturalEventController {
     }
 
     // 기간에 맞게 설정
+    // 날짜를 넣으면 그 날짜에 하는 데이터 보내주기
     @GetMapping("/findculturalfromdate")
     public ResponseEntity<?> findCulturalFromDate(@RequestBody CulturalEventFromDateRequestDTO culturalEventFromDateRequestDTO) {
-        List<CulturalEventFromDateResponseDTO> responseDTOList = culturalEventService.getCulturalListFromDate(culturalEventFromDateRequestDTO.getDate());
+        List<CulturalEventResponseDTO> responseDTOList = culturalEventService.getCulturalListFromDate(culturalEventFromDateRequestDTO.getDate());
         if (responseDTOList.isEmpty()) {
             return ResponseEntity.ok(ApiResponse.success("데이터가 존재하지 않음", null));
         }
         return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", responseDTOList));
         // 이미지, 제목, 장소, 시작 날짜, 끝나는 날짜
+    }
+
+    // 분야, 지역(구), 비용, 연령 검색 검색
+    @GetMapping("/culturalfilter")
+    public ResponseEntity<?> culturalFilter(@RequestBody FilterCulturalRequestDTO filterCulturalRequestDTO) {
+        List<CulturalEventResponseDTO> data = culturalEventService.getCulturalFilter(filterCulturalRequestDTO);
+        if (data == null || data.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success("데이터 없음" , null));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", data));
+    }
+
+    // 이름 검색
+    @GetMapping("/findculturalname")
+    public ResponseEntity<?> findCulturalName(@RequestBody CulturalEventImageRequestDTO culturalEventImageRequestDTO) {
+        List<CulturalEventResponseDTO> culturalEventResponseDTOList = culturalEventService.getCulturalFromKeyword(culturalEventImageRequestDTO.getKeyword());
+        if (culturalEventResponseDTOList.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success("데이터가 존재하지 않음", null));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", culturalEventResponseDTOList));
     }
 
     // 행사 추천(온보딩 기반, 없으면 랜덤)

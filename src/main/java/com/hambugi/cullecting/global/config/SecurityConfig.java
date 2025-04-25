@@ -29,7 +29,8 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable) // 🔥 추가
                 .httpBasic(AbstractHttpConfigurer::disable) // 🔥 추가
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/member/send", "/member/verify", "/member/login", "/member/login/resetpassword", "/images/**").permitAll()
+                        .requestMatchers("/member/send", "/member/verify", "/member/login", "/member/login/resetpassword", "/images/**", "/cultural/**").permitAll()
+                        .requestMatchers("/cultural/recommendcultural").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

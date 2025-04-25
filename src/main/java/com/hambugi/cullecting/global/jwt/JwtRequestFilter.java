@@ -29,7 +29,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             "/member/send",
             "/member/verify",
             "/member/login",
-            "/images/**"
+            "/images/**",
+            "/cultural/findculturalimage",
+            "/cultural/findculturalfromdate",
+            "/cultural/culturalfilter",
+            "/cultural/findculturalname",
+            "/cultural/latestcultural",
+            "/cultural/culturaldetail"
     );
 
     public JwtRequestFilter(JwtTokenUtil jwtTokenUtil, CustomUserDetailsService userDetailsService, RedisUtil redisUtil, PathMatcher pathMatcher) {

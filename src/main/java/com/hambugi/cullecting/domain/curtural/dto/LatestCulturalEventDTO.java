@@ -9,5 +9,5 @@ import java.util.Map;
 @Getter
 @Setter
 public class LatestCulturalEventDTO {
-    private Map<String, List<CulturalEventFromDateResponseDTO>> result;
+    private Map<String, List<CulturalEventResponseDTO>> result;
 }
