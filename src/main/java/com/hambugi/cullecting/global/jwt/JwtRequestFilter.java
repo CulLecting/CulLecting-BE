@@ -53,7 +53,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (header == null || !header.startsWith("Bearer ")) {
             boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
 
-            boolean isCulturalIdRequest = requestURI.matches("^/cultural/\\\\d+$");
+            boolean isCulturalIdRequest = requestURI.matches("^/cultural/\\d+$");
+            System.out.println("isExcluded: " + isExcluded);
+            System.out.println("isCulturalIdRequest: " + isCulturalIdRequest);
             if (isExcluded || isCulturalIdRequest) {
                 chain.doFilter(request, response);
                 return;
