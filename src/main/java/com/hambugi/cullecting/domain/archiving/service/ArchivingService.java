@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -193,4 +195,42 @@ public class ArchivingService {
                 .map(Map.Entry::getKey)
                 .orElse(null);
     }
+
+    //iOS 기반 아카이빙 더미데이터 생성
+    public String addArchiving(MultipartFile image, UserDetails userDetails) {
+        String imageName = addImage(image);
+        Member member = memberRepository.findByEmail(userDetails.getUsername());
+        if (member == null || imageName == null) {
+            return null;
+        }
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Archiving archiving = new Archiving();
+        archiving.setMember(member);
+        archiving.setImageURL("/images/" + imageName);
+        archiving.setTitle("");
+        archiving.setDescription("");
+        archiving.setTemplate(CardTemplate.DEFAULT);
+        archiving.setCategory("선택없음");
+        archiving.setDate(dateFormat.format(new Date()));
+        archivingRepository.save(archiving);
+        return archiving.getId();
+    }
+
+    // 아카이빙 단건 검색
+    public ArchivingResponseDTO findArchiving(String id) {
+        Archiving archiving = archivingRepository.findById(id).orElse(null);
+        if (archiving == null) {
+            return null;
+        }
+        ArchivingResponseDTO archivingResponseDTO = new ArchivingResponseDTO();
+        archivingResponseDTO.setId(archiving.getId());
+        archivingResponseDTO.setTitle(archiving.getTitle());
+        archivingResponseDTO.setDescription(archiving.getDescription());
+        archivingResponseDTO.setDate(archiving.getDate());
+        archivingResponseDTO.setImageURL(archiving.getImageURL());
+        archivingResponseDTO.setCategory(archiving.getCategory());
+        archivingResponseDTO.setTemplate(String.valueOf(archiving.getTemplate()));
+        return archivingResponseDTO;
+    }
+
 }

@@ -94,4 +94,25 @@ public class ArchivingController {
         return ResponseEntity.ok(ApiResponse.success("데이터 찾기 성공", preferenceCardDTO));
     }
 
+    // iOS 기반 더미데이터 만들기
+    @PostMapping("/iOS/upload")
+    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @AuthenticationPrincipal UserDetails userDetails) {
+        String id = archivingService.addArchiving(image, userDetails);
+        if (id == null) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 추가 실패"));
+        }
+        iOSArchivingAddResponse archivingAddResponse = new iOSArchivingAddResponse();
+        archivingAddResponse.setId(id);
+        return ResponseEntity.ok(ApiResponse.success("더미데이터 추가 성공", archivingAddResponse));
+    }
+
+    // iOS 기반 아카이빙 단건 데이터 가져오기(id값으로)
+    @PostMapping("/find")
+    public ResponseEntity<?> findArchiving(@RequestBody iOSArchivingFindRequest archivingFindRequest) {
+        ArchivingResponseDTO responseDTO = archivingService.findArchiving(archivingFindRequest.getId());
+        if (responseDTO == null) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 검색 실패"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", responseDTO));
+    }
 }
