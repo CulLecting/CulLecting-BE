@@ -7,4 +7,7 @@ import lombok.Setter;
 @Setter
 public class VerificationResponse {
     private String token;
+    public VerificationResponse(String token) {
+        this.token = token;
+    }
 }

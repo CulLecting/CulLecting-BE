@@ -1,5 +1,7 @@
 package com.hambugi.cullecting.global.config;
 
+import com.hambugi.cullecting.global.exception.CustomAccessDeniedHandler;
+import com.hambugi.cullecting.global.exception.CustomAuthenticationEntryPoint;
 import com.hambugi.cullecting.global.jwt.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,15 +25,19 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthenticationEntryPoint entryPoint, CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable) // 🔥 추가
                 .httpBasic(AbstractHttpConfigurer::disable) // 🔥 추가
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/member/send", "/member/verify", "/member/login", "/member/login/resetpassword", "/images/**", "/cultural/**").permitAll()
-                        .requestMatchers("/cultural/recommendcultural").authenticated()
+                        .requestMatchers("/cultural/recommendations").authenticated()
+                        .requestMatchers("/member/email-verifications", "/member/email-verifications/verify", "/member/login", "/member/password/reset-request", "/images/**", "/cultural/**", "/error").permitAll()
                                 .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(entryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

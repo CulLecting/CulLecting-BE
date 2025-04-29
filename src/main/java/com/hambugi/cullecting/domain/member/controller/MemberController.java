@@ -6,7 +6,6 @@ import com.hambugi.cullecting.domain.member.entity.Member;
 import com.hambugi.cullecting.domain.member.service.MemberService;
 import com.hambugi.cullecting.global.jwt.JwtTokenUtil;
 import com.hambugi.cullecting.global.redis.RedisTokenType;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,51 +26,42 @@ public class MemberController {
     }
 
     // 이메일 인증 메일 보내기
-    @PostMapping("/send")
-    public ResponseEntity<?> send(@RequestBody EmailRequest emailRequest) {
-        boolean result = sendEmail(emailRequest, true);
-        if (!result) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "이미 등록된 이메일 입니다."));
+    @PostMapping("/email-verifications")
+    public ResponseEntity<?> send(@RequestBody EmailRequest request) {
+        if (!sendEmail(request, true)) {
+            return ResponseEntity.status(409).body(ApiResponse.error(409, "이미 등록된 이메일입니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("인증번호 전송 완료", null));
+        return ResponseEntity.ok(ApiResponse.success("이메일 인증번호 전송 성공", null));
     }
 
     // 인증번호 확인하기
-    @PostMapping("/verify")
+    @PostMapping("/email-verifications/verify")
     public ResponseEntity<?> verifyCode(@RequestBody VerifyRequest request) {
         boolean result = mailService.verifyCode(request.getEmail(), request.getCode());
-        VerificationResponse response = new VerificationResponse();
-        if (result) {
-            String token = jwtTokenUtil.generateSignUpToken(request.getEmail());
-            response.setToken(token);
-            return ResponseEntity.ok(ApiResponse.success("인증 성공", response));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(403, "인증번호 불일치 또는 만료됨"));
+        if (!result) {
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "인증번호가 일치하지 않거나 만료되었습니다."));
         }
+        String token = jwtTokenUtil.generateSignUpToken(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("이메일 인증 성공", new VerificationResponse(token)));
     }
 
     // 회원가입 진행하기
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignUpRequest signUpRequest, @RequestHeader("Authorization") String token) {
+    @PostMapping
+    public ResponseEntity<?> signup(@RequestBody SignUpRequest request, @RequestHeader("Authorization") String token) {
         if (!memberService.validateToken(token)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403,"유효하지 않은 토큰") );
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "유효하지 않은 토큰입니다."));
         }
         if (!memberService.validateTokenType(token, RedisTokenType.EMAIL_VERIFICATION)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "유효하지 않은 토큰 타입"));
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "토큰 유형이 이메일 인증용이 아닙니다."));
         }
-        if (!memberService.validateSignUpEmail(token, signUpRequest.getEmail())) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "인증 이메일과 입력한 이메일이 다름"));
+        if (!memberService.validateSignUpEmail(token, request.getEmail())) {
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "이메일 인증 정보가 일치하지 않습니다."));
         }
-        if (memberService.isEmailExist(signUpRequest.getEmail())) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "이미 등록된 이메일 입니다."));
-        } else {
-            memberService.signUp(signUpRequest);
-            if (!memberService.isEmailExist(signUpRequest.getEmail())) {
-                return ResponseEntity.status(500).body(ApiResponse.error(500, "회원가입 실패"));
-            } else {
-                return ResponseEntity.ok(ApiResponse.success("회원가입 완료", null));
-            }
+        if (memberService.isEmailExist(request.getEmail())) {
+            return ResponseEntity.status(409).body(ApiResponse.error(409, "이미 등록된 이메일입니다."));
         }
+        memberService.signUp(request);
+        return ResponseEntity.ok(ApiResponse.success("회원가입 완료", null));
     }
 
     // 로그인 진행하기
@@ -79,68 +69,69 @@ public class MemberController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         Member member = memberService.login(loginRequest);
         if (member == null) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "아이디 혹은 비밀번호가 잘못되었습니다."));
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "아이디 또는 비밀번호가 올바르지 않습니다."));
         }
         TokenResponse response = memberService.generateAccessToken(member.getEmail());
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", response));
     }
 
     // 유저정보 가져오기
-    @GetMapping("/userinfo")
+    @GetMapping("/me")
     public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
         MemberResponseDTO member = memberService.findByMemberResponseFromEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("유저정보 찾기 성공", member));
+        if (member == null) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "회원 정보를 찾을 수 없습니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.success("회원 정보 조회 성공", member));
     }
 
     // 만료된 accessToken 을 재발급 받기 위함
-    @PostMapping("/refreshtoken")
+    @PostMapping("/token/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String token) {
         if (!memberService.validateToken(token)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "유효하지 않은 토큰"));
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "유효하지 않은 토큰입니다."));
         }
         if (!memberService.validateTokenType(token, RedisTokenType.REFRESH_TOKEN)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "유효하지 않은 토큰 타입"));
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "토큰 유형이 리프레시 토큰이 아닙니다."));
         }
         String email = memberService.findEmailByToken(token);
         if (!memberService.validateRedisToken(email, token, RedisTokenType.REFRESH_TOKEN)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "저장된 리프레쉬 토큰과 일치하지 않습니다."));
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "토큰 정보가 일치하지 않습니다."));
         }
         TokenResponse response = memberService.generateAccessToken(email);
         return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", response));
     }
 
     // 로그인 페이지에서 비밀번호 재발급 메일 보내기
-    @PostMapping("/login/resetpassword")
+    @PostMapping("/password/reset-request")
     public ResponseEntity<?> resetPassword(@RequestBody EmailRequest emailRequest) {
-        boolean result = sendEmail(emailRequest, false);
-        if (!result) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "존재하지 않는 이메일"));
+        if (!sendEmail(emailRequest, false)) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "해당 이메일이 존재하지 않습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("인증번호 전송 완료", null));
+        return ResponseEntity.ok(ApiResponse.success("비밀번호 재설정 인증번호 전송 성공", null));
     }
 
     // 로그인 페이지 비밀번호 업데이트
-    @PostMapping("/passwordupdate")
-    public ResponseEntity<?> passwordUpdate(@RequestBody PasswordRequest passwordRequest, @RequestHeader("Authorization") String token) {
+    @PatchMapping("/password")
+    public ResponseEntity<?> passwordUpdate(@RequestBody PasswordRequest request, @RequestHeader("Authorization") String token) {
         if (!memberService.validateToken(token)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "유효하지 않은 토큰"));
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "유효하지 않은 토큰입니다."));
         }
         if (!memberService.validateTokenType(token, RedisTokenType.EMAIL_VERIFICATION)) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "유효하지 않은 토큰 타입"));
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "이메일 인증용 토큰이 아닙니다."));
         }
-        if (!memberService.validateSignUpEmail(token, passwordRequest.getEmail())) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "인증 이메일과 입력한 이메일이 다름"));
+        if (!memberService.validateSignUpEmail(token, request.getEmail())) {
+            return ResponseEntity.status(403).body(ApiResponse.error(403, "이메일 인증 정보가 일치하지 않습니다."));
         }
-        if (!memberService.isEmailExist(passwordRequest.getEmail())) {
-            return ResponseEntity.status(403).body(ApiResponse.error(403, "등록되지 않은 이메일 입니다."));
-        } else {
-            memberService.resetPassword(passwordRequest.getEmail(), passwordRequest.getNewPassword());
-            return ResponseEntity.ok(ApiResponse.success("비밀번호 변경완료", null));
+        if (!memberService.isEmailExist(request.getEmail())) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "등록되지 않은 이메일입니다."));
         }
+        memberService.resetPassword(request.getEmail(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("비밀번호 변경 완료", null));
     }
 
     // 닉네임 업데이트
-    @PostMapping("/nicknameupdate")
+    @PatchMapping("/nickname")
     public ResponseEntity<?> nicknameUpdate(@RequestBody NicknameUpdateRequest nickname, @AuthenticationPrincipal UserDetails userDetails) {
         memberService.nicknameUpdate(userDetails.getUsername(), nickname.getNickname());
         return ResponseEntity.ok(ApiResponse.success("닉네임 변경 완료", null));
@@ -151,13 +142,13 @@ public class MemberController {
     public ResponseEntity<?> onboarding(@AuthenticationPrincipal UserDetails userDetails, @RequestBody OnboardingRequest onboardingRequest) {
         boolean result = memberService.addOnboard(userDetails.getUsername(), onboardingRequest);
         if (!result) {
-            return ResponseEntity.status(500).body(ApiResponse.error(500, "추가 실패"));
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "온보딩 정보 저장 실패"));
         }
-        return ResponseEntity.ok(ApiResponse.success("추가 완료", null));
+        return ResponseEntity.ok(ApiResponse.success("온보딩 정보 저장 완료", null));
     }
 
     // 마이페이지에서 비밀번호 변경하기
-    @PostMapping("/mypage/passwordreset")
+    @PatchMapping("/mypage/password")
     public ResponseEntity<?> passwordReset(@AuthenticationPrincipal UserDetails userDetails, @RequestBody PasswordResetRequest resetRequest) {
         if(!memberService.passwordEquals(userDetails.getUsername(), resetRequest.getBeforePassword())) {
             return ResponseEntity.status(403).body(ApiResponse.error(403, "기존 비밀번호와 일치하지 않음"));
@@ -174,10 +165,10 @@ public class MemberController {
     }
 
     // 회원 탈퇴
-    @PostMapping("/deletemember")
+    @DeleteMapping
     public ResponseEntity<?> deleteMember(@AuthenticationPrincipal UserDetails userDetails) {
         memberService.removeMember(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("유저 삭제 성공", null));
+        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴 완료", null));
     }
 
     // 메일 보내기 기능을 하나로

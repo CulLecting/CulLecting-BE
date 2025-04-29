@@ -22,58 +22,55 @@ public class CulturalEventController {
     }
 
     // 문화 이미지 검색
-    @GetMapping("/findculturalimage")
+    @GetMapping("/images")
     public ResponseEntity<?> findCulturalImage(@RequestParam String keyword) {
         List<CulturalEventImageResponseDTO> imageList = culturalEventService.searchImage(keyword);
-        return ResponseEntity.ok(ApiResponse.success("이미지 검색 성공", imageList));
+        if (imageList.isEmpty()){
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "해당 키워드의 문화 이미지를 찾을 수 없습니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.success("문화 이미지 검색 성공", imageList));
     }
 
     // 기간에 맞게 설정
     // 날짜를 넣으면 그 날짜에 하는 데이터 보내주기
-    @GetMapping("/findculturalfromdate")
+    @GetMapping("/date")
     public ResponseEntity<?> findCulturalFromDate(@RequestParam LocalDate date) {
-        List<CulturalEventResponseDTO> responseDTOList = culturalEventService.getCulturalListFromDate(date);
-        if (responseDTOList.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.success("데이터가 존재하지 않음", null));
+        List<CulturalEventResponseDTO> result = culturalEventService.getCulturalListFromDate(date);
+        if (result.isEmpty()) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "해당 날짜의 문화 행사가 없습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", responseDTOList));
-        // 이미지, 제목, 장소, 시작 날짜, 끝나는 날짜
+        return ResponseEntity.ok(ApiResponse.success("문화 행사 조회 성공", result));
     }
 
     // 분야, 지역(구), 비용, 연령 검색 검색
-    @GetMapping("/culturalfilter")
+    @GetMapping("/filter")
     public ResponseEntity<?> culturalFilter(@RequestParam(required = false) String codeName, @RequestParam(required = false) String guName, @RequestParam(required = false) String themeCode, @RequestParam(required = false) Boolean isFree) {
-        FilterCulturalRequestDTO request = new FilterCulturalRequestDTO();
-        request.setCodeName(codeName);
-        request.setGuName(guName);
-        request.setThemeCode(themeCode);
-        request.setIsFree(isFree);
+        FilterCulturalRequestDTO request = new FilterCulturalRequestDTO(codeName, guName, themeCode, isFree);
         List<CulturalEventResponseDTO> data = culturalEventService.getCulturalFilter(request);
         if (data == null || data.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.success("데이터 없음" , null));
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "조건에 해당하는 문화 행사가 없습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", data));
+        return ResponseEntity.ok(ApiResponse.success("문화 행사 필터 조회 성공", data));
     }
 
     // 이름 검색
-    @GetMapping("/findculturalname")
-    public ResponseEntity<?> findCulturalName(@RequestParam String keyword) {
-        List<CulturalEventResponseDTO> culturalEventResponseDTOList = culturalEventService.getCulturalFromKeyword(keyword);
-        if (culturalEventResponseDTOList.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.success("데이터가 존재하지 않음", null));
+    @GetMapping("/search")
+    public ResponseEntity<?> searchCulturalName(@RequestParam String keyword) {
+        List<CulturalEventResponseDTO> result = culturalEventService.getCulturalFromKeyword(keyword);
+        if (result.isEmpty()) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "해당 이름의 문화 행사를 찾을 수 없습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 검색 완료", culturalEventResponseDTOList));
+        return ResponseEntity.ok(ApiResponse.success("문화 행사 검색 성공", result));
     }
 
     // 행사 추천(온보딩 기반, 없으면 랜덤)
-    @GetMapping("/recommendcultural")
+    @GetMapping("/recommendations")
     public ResponseEntity<?> recommendCultural(@AuthenticationPrincipal UserDetails userDetails) {
-        // 이미지, 제목, 장소
-        List<RecommendCulturalEventResponseDTO> recommendCulturalEventResponseDTOList = culturalEventService.getRecommendCultural(userDetails.getUsername());
-        if (recommendCulturalEventResponseDTOList.isEmpty()) {
-            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 찾기 실패"));
+        List<RecommendCulturalEventResponseDTO> list = culturalEventService.getRecommendCultural(userDetails.getUsername());
+        if (list.isEmpty()) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "추천할 문화 행사가 없습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 찾기 성공", recommendCulturalEventResponseDTOList));
+        return ResponseEntity.ok(ApiResponse.success("문화 행사 추천 성공", list));
     }
 
     // 최신행사 (전체, 카테고리에 맞게)
@@ -86,21 +83,23 @@ public class CulturalEventController {
     교육/체험(교육/체험)
     기타(기타)
     */
-    @GetMapping("/latestcultural")
+    @GetMapping("/latest")
     public ResponseEntity<?> latestCultural() {
-        // 이미지, 제목, 장소, 기간
-        LatestCulturalEventDTO latestCulturalEventDTO = culturalEventService.getLatestCulturalEvent();
-        return ResponseEntity.ok(ApiResponse.success("성공", latestCulturalEventDTO));
+        LatestCulturalEventDTO latest = culturalEventService.getLatestCulturalEvent();
+        if (latest == null) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "최신 문화 행사를 찾을 수 없습니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.success("최신 문화 행사 조회 성공", latest));
     }
 
     // 행사 상세 페이지
-    @GetMapping("/culturaldetail")
-    public ResponseEntity<?> culturalDetail(@RequestParam Long culturalId) {
-        CulturalEvent culturalEvent = culturalEventService.getCulturalEvent(culturalId);
-        if (culturalEvent == null) {
-            return ResponseEntity.status(500).body(ApiResponse.error(500, "데이터 검색 실패"));
+    @GetMapping("/{culturalId}")
+    public ResponseEntity<?> culturalDetail(@PathVariable Long culturalId) {
+        CulturalEvent event = culturalEventService.getCulturalEvent(culturalId);
+        if (event == null) {
+            return ResponseEntity.status(404).body(ApiResponse.error(404, "해당 문화 행사를 찾을 수 없습니다."));
         }
-        return ResponseEntity.ok(ApiResponse.success("데이터 검색 성공", culturalEvent));
+        return ResponseEntity.ok(ApiResponse.success("문화 행사 상세 조회 성공", event));
     }
 
 }
