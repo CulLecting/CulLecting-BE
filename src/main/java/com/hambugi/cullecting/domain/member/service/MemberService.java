@@ -1,9 +1,6 @@
 package com.hambugi.cullecting.domain.member.service;
 
-import com.hambugi.cullecting.domain.member.dto.LoginRequest;
-import com.hambugi.cullecting.domain.member.dto.OnboardingRequest;
-import com.hambugi.cullecting.domain.member.dto.SignUpRequest;
-import com.hambugi.cullecting.domain.member.dto.TokenResponse;
+import com.hambugi.cullecting.domain.member.dto.*;
 import com.hambugi.cullecting.domain.member.entity.Member;
 import com.hambugi.cullecting.domain.member.repository.MemberRepository;
 import com.hambugi.cullecting.global.jwt.JwtTokenUtil;
@@ -53,6 +50,17 @@ public class MemberService {
     }
 
     // 이메일로 사용자 찾기
+    public MemberResponseDTO findByMemberResponseFromEmail(String email) {
+        Member member = memberRepository.findByEmail(email);
+        MemberResponseDTO memberResponseDTO = new MemberResponseDTO();
+        memberResponseDTO.setId(member.getId());
+        memberResponseDTO.setEmail(member.getEmail());
+        memberResponseDTO.setNickname(member.getNickname());
+        memberResponseDTO.setCategory(member.getCategoryList());
+        memberResponseDTO.setLocation(member.getLocationList());
+        return memberResponseDTO;
+    }
+
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }

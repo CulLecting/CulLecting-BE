@@ -88,7 +88,7 @@ public class MemberController {
     // 유저정보 가져오기
     @GetMapping("/userinfo")
     public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        Member member = memberService.findByEmail(userDetails.getUsername());
+        MemberResponseDTO member = memberService.findByMemberResponseFromEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("유저정보 찾기 성공", member));
     }
 
