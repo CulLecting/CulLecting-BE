@@ -10,6 +10,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
@@ -54,8 +56,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
 
             boolean isCulturalIdRequest = requestURI.matches("^/cultural/\\d+$");
-            System.out.println("isExcluded: " + isExcluded);
-            System.out.println("isCulturalIdRequest: " + isCulturalIdRequest);
             if (isExcluded || isCulturalIdRequest) {
                 chain.doFilter(request, response);
                 return;
@@ -97,7 +97,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         return;
                     }
                     UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                    System.out.println(userDetails.getUsername());
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.clearContext();
@@ -125,14 +124,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             return;
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("[디버그] authentication: " + authentication);
-        System.out.println("[디버그] isAuthenticated: " + authentication.isAuthenticated());
-        System.out.println("[디버그] principal: " + authentication.getPrincipal());
-        System.out.println("[디버그] authorities: " + authentication.getAuthorities());
+        log.debug("[디버그] authentication: {}", authentication);
+        log.debug("[디버그] isAuthenticated: {}", authentication.isAuthenticated());
+        log.debug("[디버그] principal: {}", authentication.getPrincipal());
+        log.debug("[디버그] authorities: {}", authentication.getAuthorities());
         chain.doFilter(request, response);
     }
 
     private void setErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        log.error(message);
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
         ApiResponse<Object> errorResponse = ApiResponse.error(status, message);
