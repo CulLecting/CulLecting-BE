@@ -32,7 +32,8 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable) // 🔥 추가
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/cultural/recommendations").authenticated()
-                        .requestMatchers("/member/email-verifications", "/member/email-verifications/verify", "/member/login", "/member/password/reset-request", "/images/**", "/cultural/**", "/error").permitAll()
+                        .requestMatchers("/member/view/**").permitAll()
+                        .requestMatchers("/member/email-verifications", "/member/email-verifications/verify", "/member/login", "/member/password/reset-request", "/images/**", "/cultural/**", "/error", "/favicon.ico").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -56,5 +57,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 탈퇴</title>
+</head>
+<body>
+    <h2>회원 탈퇴</h2>
+    <p>계정을 삭제하려면 아래 이메일을 입력하고 요청 버튼을 누르세요.</p>
+    <form id="deleteForm" method="POST" action="member/view/delete">
+        <input type="email" name="email" id="emailInput" placeholder="이메일 주소" required />
+        <button type="submit">계정 삭제</button>
+    </form>
+
+    <div id="resultMessage"></div>
+</body>
+<script>
+    document.getElementById("deleteForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById("emailInput").value;
+
+        fetch('/member/view/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email })
+        })
+            .then(response => response.text())
+            .then(result => {
+                console.log(result)
+                document.getElementById("resultMessage").innerText = "✅ 계정이 성공적으로 삭제되었습니다.";
+            })
+            .catch(error => {
+                document.getElementById("resultMessage").innerText = "❌ 오류가 발생했습니다.";
+            });
+    });
+</script>
+</html>
